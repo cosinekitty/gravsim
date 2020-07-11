@@ -1,0 +1,29 @@
+{
+  "name": "gravsim",
+  "version": "1.0.0",
+  "description": "A simple but accurate orbital mechanics simulator",
+  "main": "gravsim.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cosinekitty/gravsim.git"
+  },
+  "keywords": [
+    "astronomy",
+    "gravity",
+    "simulator",
+    "solar",
+    "system",
+    "planet",
+    "orbital",
+    "mechanics"
+  ],
+  "author": "Don Cross <cosinekitty@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cosinekitty/gravsim/issues"
+  },
+  "homepage": "https://github.com/cosinekitty/gravsim#readme"
+}
