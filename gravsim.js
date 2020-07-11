@@ -53,6 +53,11 @@
         return [k*v[0], k*v[1], k*v[2]];
     }
 
+    gravsim.VectorError = function(a, b) {
+        const x = Subtract(a, b);
+        return Math.sqrt(Dot(x, x));
+    }
+
     class Simulator {
         constructor(masses, initialStates) {
             this.mass = masses;
@@ -97,7 +102,7 @@
             return newState;
         }
 
-        Update(dt) {
+        NaiveUpdate(dt) {
             let acc = this.Accelerations(this.state);
             this.state = this.Movement(this.state, acc, dt);
             return this.state;

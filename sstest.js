@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const gravsim = require('./gravsim.js');
-const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
 
 /*
     The following table of masses was calculated from
@@ -28,9 +27,21 @@ const masses = {
 };
 
 function main() {
+    const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
     const sim = gravsim.MakeSimulator(masses, ss.data[0].body);
-    const dt = 1.0;     // time increment in days
-    sim.Update(1.0);
+    const nsteps = 100000;
+    const dt = ss.dt / nsteps;
+
+    console.log(`Simulating ${nsteps} steps of ${dt} days per step.`);
+    for (let i=0; i < nsteps; ++i) {
+        sim.NaiveUpdate(dt);
+    }
+
+    const se = sim.state.Earth;
+    const ce = ss.data[1].body.Earth;
+    console.log(`Simulated Earth pos = ${se.pos}`);
+    console.log(`Correct   Earth pos = ${ce.pos}`);
+    console.log(`Error = ${gravsim.VectorError(se.pos, ce.pos)} AU`);
 }
 
 main();
