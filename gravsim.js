@@ -28,12 +28,57 @@
     SOFTWARE.
 */
 (function(gravsim){
-'use strict';
+    'use strict';
 
-const G = 6.67430e-11;   // universal gravitation constant [m^3 * kg^(-1) * s^(-2)]
+    const C  = 299792458.0;                 // speed of light [m/s]
+    const AU = 1.4959787069098932e+11;      // astronomical unit [m/au]
+    const SecondsPerDay = 24 * 3600;
 
-gravsim.init = function(masses, initialStates) {
+    // gravitation constant [AU^3 * kg^(-1) * day^(-2)]
+    const G  = 6.67430e-11 * (SecondsPerDay * SecondsPerDay) / (AU*AU*AU);
 
-}
+    function Dot(a, b) {
+        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+    }
 
+    function Diff(a, b) {
+        return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+    }
+
+    class Simulator {
+        constructor(masses, initialStates) {
+            this.mass = masses;
+            this.state = initialStates;
+        }
+
+        CalcAccelerations(state) {
+            // Calculate the net acceleration vectors experienced by
+            // each body due to the gravitational pull of all other bodies.
+            const acc = {};
+            for (let [name, body] of Object.entries(state)) {
+                acc[name] = [0.0, 0.0, 0.0];
+                for (let [otherName, otherBody] of Object.entries(state)) {
+                    if (body !== otherBody) {
+                        let dr = Diff(otherBody.pos, body.pos);
+                        let r2 = Dot(dr, dr);
+                        let r = Math.sqrt(r2);
+                        let g = G * this.mass[otherName] / r2;      // acceleration in [AU/day^2]
+                        acc[name][0] += g * (dr[0] / r);
+                        acc[name][1] += g * (dr[1] / r);
+                        acc[name][2] += g * (dr[2] / r);
+                    }
+                }
+            }
+            return acc;
+        }
+
+        Update(dt) {
+            const acc = this.CalcAccelerations(this.state);
+            console.log(acc);
+        }
+    }
+
+    gravsim.MakeSimulator = function(masses, initialStates) {
+        return new Simulator(masses, initialStates);
+    }
 })(typeof exports==='undefined' ? (this.gravsim={}) : exports);

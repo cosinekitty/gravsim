@@ -28,6 +28,9 @@ const masses = {
 };
 
 function main() {
+    const sim = gravsim.MakeSimulator(masses, ss.data[0].body);
+    const dt = 1.0;     // time increment in days
+    sim.Update(1.0);
 }
 
 main();
