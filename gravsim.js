@@ -53,6 +53,10 @@
         return [k*v[0], k*v[1], k*v[2]];
     }
 
+    function Average(a, b) {
+        return [(a[0]+b[0])/2, (a[1]+b[1])/2, (a[2]+b[2])/2];
+    }
+
     gravsim.VectorError = function(a, b) {
         const x = Subtract(a, b);
         return Math.sqrt(Dot(x, x));
@@ -84,6 +88,14 @@
             return acc;
         }
 
+        AverageAccelerations(a, b) {
+            let c = {}
+            for (let name in a) {
+                c[name] = Average(a[name], b[name]);
+            }
+            return c;
+        }
+
         Movement(state, acc, dt) {
             // Apply movement to every body in 'state' using provided acceleration vectors.
             // Return a new state object containing bodies with updated
@@ -103,8 +115,45 @@
         }
 
         NaiveUpdate(dt) {
+            // A naive update uses the accelerations of each body
+            // at the start of the increment as if they are constant
+            // over the time interval in that increment.
+            // In reality, the accelerations change slightly as
+            // the bodies move along their respective orbits.
             let acc = this.Accelerations(this.state);
             this.state = this.Movement(this.state, acc, dt);
+            return this.state;
+        }
+
+        Update(dt) {
+            // This is a much more accurate update algorithm than NaiveUpdate.
+            // It starts the same way as NaiveUpdate, but refines the answer
+            // by using the average of the acceleration vectors for the
+            // beginning and ending of the increment.
+            // This causes the estimated changes in velocity and position
+            // to change, which in turn causes the acceleration estimates to change.
+            // The process is iterated until the position vector converges.
+            let acc1 = this.Accelerations(this.state);
+            let guess = this.Movement(this.state, acc1, dt);
+            let diff;
+            do {
+                // Calculate the accelerations at the guessed position.
+                let acc2 = this.Accelerations(guess);
+
+                // Assume the overall acceleration effect is approximated by the
+                // average of the beginning acceleration and ending acceleration.
+                let acc = this.AverageAccelerations(acc1, acc2);
+
+                // Update the guess using the refined acceleration.
+                let refined = this.Movement(this.state, acc, dt);
+
+                // Mercury experiences the most acceleration of all the bodies.
+                // Use it as a gauge of convergence.
+                diff = gravsim.VectorError(guess.Mercury.pos, refined.Mercury.pos);
+
+                guess = refined;
+            } while (diff > 1.0e-15);
+            this.state = guess;
             return this.state;
         }
     }

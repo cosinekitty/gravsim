@@ -26,15 +26,16 @@ const masses = {
     Pluto:      1.470715837286293e+22
 };
 
-function main() {
+
+function Test(label, update) {
     const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
     const sim = gravsim.MakeSimulator(masses, ss.data[0].body);
-    const nsteps = 100000;
+    const nsteps = 10000;
     const dt = ss.dt / nsteps;
 
-    console.log(`Simulating ${nsteps} steps of ${dt} days per step.`);
+    console.log(`${label}: Simulating ${nsteps} steps of ${dt} days per step.`);
     for (let i=0; i < nsteps; ++i) {
-        sim.NaiveUpdate(dt);
+        update(sim, dt);
     }
 
     const se = sim.state.Earth;
@@ -42,6 +43,8 @@ function main() {
     console.log(`Simulated Earth pos = ${se.pos}`);
     console.log(`Correct   Earth pos = ${ce.pos}`);
     console.log(`Error = ${gravsim.VectorError(se.pos, ce.pos)} AU`);
+    console.log();
 }
 
-main();
+Test('Naive',    (sim, dt) => sim.NaiveUpdate(dt))
+Test('Improved', (sim, dt) => sim.Update(dt))
