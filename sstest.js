@@ -4,28 +4,28 @@ const fs = require('fs');
 const gravsim = require('./gravsim.js');
 const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
 
-/*
-    The following are the reciprocal masses of the solar system bodies,
-    from the DE-405 model. These data were copied from NOVAS C 3.1 file novascon.c.
-    Each number is the mass of the Sun divided by the mass of the given body.
-*/
-const recipMasses = {
-    Sun:              1.0,
-    Mercury:    6023600.0,
-    Venus:       408523.71,
-    Earth:       328900.5614,      // actually the Earth/Moon system as a whole
-    Mars:       3098708.0,
-    Jupiter:       1047.3486,
-    Saturn:        3497.898,
-    Uranus:       22902.98,
-    Neptune:      19412.24,
-    Pluto:    135200000.0,
+// Masses of Solar System bodies relative to the Earth/Moon system
+const masses = {
+    Sun:        328900.5614,
+    Mercury:         0.05460199239657348,
+    Venus:           0.8050954041321127,
+    Earth:           1.0,                   // actually the Earth/Moon system as a whole
+    Mars:            0.10614119220010404,
+    Jupiter:       314.03160456795376,
+    Saturn:         94.02805953747078,
+    Uranus:         14.360601170677354,
+    Neptune:        16.94294740843921,
+    Pluto:           0.0024326964600591716
 };
 
+const EarthMassKg = 5.9722e+24;
+const MoonMassKg  = 7.3420e+22;
+
+
 function main() {
-    // Convert (Sun/body) mass ratios to (body/Earth) mass ratios.
-    for (let name in recipMasses) {
-        console.log(`${name}: ${recipMasses.Earth / recipMasses[name]}`)
+    // Convert masses to kilograms
+    for (let name in masses) {
+        console.log(`${name}: ${masses[name] * (EarthMassKg + MoonMassKg)},`);
     }
 }
 

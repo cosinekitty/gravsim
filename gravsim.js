@@ -30,6 +30,8 @@
 (function(gravsim){
 'use strict';
 
+const G = 6.67430e-11;   // universal gravitation constant [m^3 * kg^(-1) * s^(-2)]
+
 gravsim.init = function(masses, initialStates) {
 
 }
