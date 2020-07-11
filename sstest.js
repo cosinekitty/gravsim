@@ -4,29 +4,30 @@ const fs = require('fs');
 const gravsim = require('./gravsim.js');
 const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
 
-// Masses of Solar System bodies relative to the Earth/Moon system
+/*
+    The following table of masses was calculated from
+    reciprocal masses of solar system bodies from DE-405,
+    copied from NOVAS C 3.1 file novascon.c.
+    These reciprocals were all of the form (mass of Sun) / (mass of body).
+    Using Earth mass = 5.9722e+24 kg, Moon mass = 7.3420e+22 kg,
+    we get Earth + Moon = 6.04562e+24 kg. All other bodies were scaled
+    accordingly.
+*/
+
 const masses = {
-    Sun:        328900.5614,
-    Mercury:         0.05460199239657348,
-    Venus:           0.8050954041321127,
-    Earth:           1.0,                   // actually the Earth/Moon system as a whole
-    Mars:            0.10614119220010404,
-    Jupiter:       314.03160456795376,
-    Saturn:         94.02805953747078,
-    Uranus:         14.360601170677354,
-    Neptune:        16.94294740843921,
-    Pluto:           0.0024326964600591716
+    Sun:        1.988407812011068e+30,
+    Mercury:    3.301028972725725e+23,
+    Venus:      4.867300877129182e+24,
+    Earth:      6.04562e+24,                // actually the Earth and Moon combined
+    Mars:       6.41689314388793e+23,
+    Jupiter:    1.8985157492081126e+27,
+    Saturn:     5.684579173009241e+26,
+    Uranus:     8.681873764947043e+25,
+    Neptune:    1.0243062171140825e+26,
+    Pluto:      1.470715837286293e+22
 };
 
-const EarthMassKg = 5.9722e+24;
-const MoonMassKg  = 7.3420e+22;
-
-
 function main() {
-    // Convert masses to kilograms
-    for (let name in masses) {
-        console.log(`${name}: ${masses[name] * (EarthMassKg + MoonMassKg)},`);
-    }
 }
 
 main();
