@@ -41,8 +41,16 @@
         return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
     }
 
-    function Diff(a, b) {
+    function Subtract(a, b) {
         return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+    }
+
+    function Add(a, b) {
+        return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];
+    }
+
+    function Multiply(k, v) {
+        return [k*v[0], k*v[1], k*v[2]];
     }
 
     class Simulator {
@@ -51,7 +59,7 @@
             this.state = initialStates;
         }
 
-        CalcAccelerations(state) {
+        Accelerations(state) {
             // Calculate the net acceleration vectors experienced by
             // each body due to the gravitational pull of all other bodies.
             const acc = {};
@@ -59,22 +67,40 @@
                 acc[name] = [0.0, 0.0, 0.0];
                 for (let [otherName, otherBody] of Object.entries(state)) {
                     if (body !== otherBody) {
-                        let dr = Diff(otherBody.pos, body.pos);
+                        let dr = Subtract(otherBody.pos, body.pos);
                         let r2 = Dot(dr, dr);
                         let r = Math.sqrt(r2);
                         let g = G * this.mass[otherName] / r2;      // acceleration in [AU/day^2]
-                        acc[name][0] += g * (dr[0] / r);
-                        acc[name][1] += g * (dr[1] / r);
-                        acc[name][2] += g * (dr[2] / r);
+                        let a = Multiply(g/r, dr);      // acceleration vector toward other body
+                        acc[name] = Add(acc[name], a);
                     }
                 }
             }
             return acc;
         }
 
+        Movement(state, acc, dt) {
+            // Apply movement to every body in 'state' using provided acceleration vectors.
+            // Return a new state object containing bodies with updated
+            // position and velocity vectors.
+            let newState = {};
+            for (let [name, body] of Object.entries(state)) {
+                // pos' = pos + vel*dt + (1/2)acc*dt^2
+                // vel' = vel + acc*dt
+                let dv = Multiply(dt, acc[name]);
+                let dr = Add(Multiply(dt/2, dv), Multiply(dt, body.vel));
+                newState[name] = {
+                    vel: Add(body.vel, dv),
+                    pos: Add(body.pos, dr)
+                };
+            }
+            return newState;
+        }
+
         Update(dt) {
-            const acc = this.CalcAccelerations(this.state);
-            console.log(acc);
+            let acc = this.Accelerations(this.state);
+            this.state = this.Movement(this.state, acc, dt);
+            return this.state;
         }
     }
 
