@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "gravsim.h"
 
@@ -53,6 +54,7 @@ static int InitSolarSystem(sim_t *sim)
 
     sim->tt = 0.0;
     sim->nbodies = (int)nbodies;
+    sim->si = 0;
     sim->body = calloc(nbodies, sizeof(body_t));
     if (sim->body == NULL)
         FAIL("Out of memory!\n");
@@ -122,6 +124,7 @@ int InitFinalState(sim_t *sim)
 
     sim->tt = 36000.0;
     sim->nbodies = (int)nbodies;
+    sim->si = 0;
     sim->body = calloc(nbodies, sizeof(body_t));
     if (sim->body == NULL)
         FAIL("Out of memory!\n");
@@ -192,7 +195,7 @@ void Compare(sim_t *sim, sim_t *goal)
 
     for (i=0; i < sim->nbodies; ++i)
     {
-        diff = Sub(sim->body[i].state[0].pos, goal->body[i].state[0].pos);
+        diff = Sub(sim->body[i].state[sim->si].pos, goal->body[i].state[goal->si].pos);
         dr = sqrt(Dot(diff, diff));
         printf("%-8s %12.8lf\n", sim->body[i].name, dr);
     }
@@ -202,11 +205,13 @@ void Compare(sim_t *sim, sim_t *goal)
 int main()
 {
     int error  = 1;
-    sim_t sim  = {0.0, 0, NULL};
-    sim_t goal = {0.0, 0, NULL};
+    sim_t sim, goal;
     const int nsteps = 36 * 5000;
     double dt;
     int n;
+
+    memset(&sim, 0, sizeof(sim));
+    memset(&goal, 0, sizeof(goal));
 
     CHECK(InitSolarSystem(&sim));
     CHECK(InitFinalState(&goal));

@@ -142,7 +142,6 @@ void MoveBodyColumn(sim_t *sim, int s, double dt)
 }
 
 
-
 void SimUpdate1(sim_t *sim, double dt)
 {
     /*
@@ -150,6 +149,6 @@ void SimUpdate1(sim_t *sim, double dt)
         Apply the current state[0] accelerations as if they are
         constant over the interval dt.
     */
-    MoveBodyColumn(sim,  0, dt);
+    MoveBodyColumn(sim, sim->si, dt);
     sim->tt += dt;
 }

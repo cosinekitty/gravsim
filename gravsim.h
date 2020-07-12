@@ -67,6 +67,7 @@ typedef struct
 {
     double   tt;            /* Terrestrial Time, relative to 1 January 2000 noon [days] */
     int      nbodies;
+    int      si;            /* current state index */
     body_t  *body;
 }
 sim_t;
