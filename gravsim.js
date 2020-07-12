@@ -31,11 +31,8 @@
     'use strict';
 
     const C  = 299792458.0;                 // speed of light [m/s]
-    const AU = 1.4959787069098932e+11;      // astronomical unit [m/au]
+    const AU = 1.49597870691e+11;           // astronomical unit [m/au]
     const SecondsPerDay = 24 * 3600;
-
-    // gravitation constant [AU^3 * kg^(-1) * day^(-2)]
-    const G  = 6.67430e-11 * (SecondsPerDay * SecondsPerDay) / (AU*AU*AU);
 
     function Dot(a, b) {
         return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
@@ -73,8 +70,8 @@
     }
 
     class Simulator {
-        constructor(masses, initialStates) {
-            this.mass = masses;
+        constructor(gm, initialStates) {
+            this.gm = gm;
             this.state = initialStates;
         }
 
@@ -89,8 +86,8 @@
                         let dr = Subtract(otherBody.pos, body.pos);
                         let r2 = Dot(dr, dr);
                         let r = Math.sqrt(r2);
-                        let g = G * this.mass[otherName] / r2;      // acceleration in [AU/day^2]
-                        let a = Multiply(g/r, dr);      // acceleration vector toward other body
+                        let g = this.gm[otherName] / r2;    // acceleration in [AU/day^2]
+                        let a = Multiply(g/r, dr);          // acceleration vector toward other body
                         acc[name] = Add(acc[name], a);
                     }
                 }
@@ -227,7 +224,7 @@
         }
     }
 
-    gravsim.MakeSimulator = function(masses, initialStates) {
-        return new Simulator(masses, initialStates);
+    gravsim.MakeSimulator = function(gm, initialStates) {
+        return new Simulator(gm, initialStates);
     }
 })(typeof exports==='undefined' ? (this.gravsim={}) : exports);

@@ -4,36 +4,35 @@ const fs = require('fs');
 const gravsim = require('./gravsim.js');
 
 /*
-    The following table of masses was calculated from
-    reciprocal masses of solar system bodies from DE-405,
-    copied from NOVAS C 3.1 file novascon.c.
-    These reciprocals were all of the form (mass of Sun) / (mass of body).
-    Using Earth mass = 5.9722e+24 kg, Moon mass = 7.3420e+22 kg,
-    we get Earth + Moon = 6.04562e+24 kg. All other bodies were scaled
-    accordingly.
-*/
+    https://web.archive.org/web/20120220062549/http://iau-comm4.jpl.nasa.gov/de405iom/de405iom.pdf
 
-const masses = {
-    Sun:        1.988407812011068e+30,
-    Mercury:    3.301028972725725e+23,
-    Venus:      4.867300877129182e+24,
-    Earth:      6.04562e+24,                // actually the Earth and Moon combined
-    Mars:       6.41689314388793e+23,
-    Jupiter:    1.8985157492081126e+27,
-    Saturn:     5.684579173009241e+26,
-    Uranus:     8.681873764947043e+25,
-    Neptune:    1.0243062171140825e+26,
-    Pluto:      1.470715837286293e+22
+    Page 10 in the above document describes the constants used in the DE405 ephemeris.
+    The following are G*M values (gravity constant * mass) in [au^3 / day^2].
+    This side-steps issues of not knowing the exact values of G and masses M[i];
+    the products GM[i] are known extremely accurately.
+*/
+const gm = {
+    Sun:        0.2959122082855911e-03,
+    Mercury:    0.4912547451450812e-10,
+    Venus:      0.7243452486162703e-09,
+    Earth:      0.8997011346712499e-09,     // Earth/Moon barycenter (EMB)
+    Mars:       0.9549535105779258e-10,
+    Jupiter:    0.2825345909524226e-06,
+    Saturn:     0.8459715185680659e-07,
+    Uranus:     0.1292024916781969e-07,
+    Neptune:    0.1524358900784276e-07,
+    Pluto:      0.2188699765425970e-11
 };
 
 
 function Test(ss, method) {
-    const sim = gravsim.MakeSimulator(masses, ss.data[0].body);
+    const sim = gravsim.MakeSimulator(gm, ss.data[0].body);
     const nsteps = 1000;
     const dt = ss.dt / nsteps;
-    const AU = 1.4959787069098932e+11;      // astronomical unit [m/au]
+    const AU = 1.49597870691e+11;           // astronomical unit [m/au]
 
-    console.log(`BEGINNING: ${method}`);
+    console.log();
+    console.log(method);
 
     for (let n=0; n+1 < ss.data.length; ++n) {
         for (let i=0; i < nsteps; ++i) {
@@ -41,15 +40,13 @@ function Test(ss, method) {
         }
     }
 
-    const se = sim.state.Earth;
-    const ce = ss.data[ss.data.length-1].body.Earth;
-    const err_au = gravsim.VectorError(se.pos, ce.pos);
-    const err_km = err_au * (AU / 1000);
-
-    console.log(`Simulated Earth pos = ${se.pos}`);
-    console.log(`Correct   Earth pos = ${ce.pos}`);
-    console.log(`Error = ${err_au} AU (${err_km} km)`);
-    console.log();
+    for (let name in sim.state) {
+        const se = sim.state[name];
+        const ce = ss.data[ss.data.length-1].body[name];
+        const err_au = gravsim.VectorError(se.pos, ce.pos);
+        const err_km = err_au * (AU / 1000);
+        console.log(`${name.padEnd(10)} error = ${err_au.toFixed(6).padStart(10)} AU (${err_km.toFixed(1).padStart(12)} km)`);
+    }
 }
 
 
