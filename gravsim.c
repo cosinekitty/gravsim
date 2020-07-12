@@ -30,3 +30,11 @@
 #include <math.h>
 #include "gravsim.h"
 
+vector_t Vector(double x, double y, double z)
+{
+    vector_t vector;
+    vector.c[0] = x;
+    vector.c[1] = y;
+    vector.c[2] = z;
+    return vector;
+}

@@ -8,4 +8,4 @@ else
     exit 1
 fi
 echo "Building code."
-gcc -lm -Wall -Werror -o sstest sstest.c gravsim.c -lm || exit $?
+gcc ${BUILDOPT} -Wall -Werror -o sstest sstest.c gravsim.c -lm || exit $?

@@ -70,5 +70,6 @@ typedef struct
 }
 sim_t;
 
+vector_t Vector(double x, double y, double z);
 
 #endif /* __DDC_GRAVSIM_H */
