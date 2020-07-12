@@ -68,18 +68,6 @@
             this.state = initialStates;
         }
 
-        Momentum() {
-            // Calculate the total linear momentum vector.
-            // Because momentum is conserved in Newtonian mechanics,
-            // and the origin (the Solar System Barycenter) is an inertial frame,
-            // the momentum should always be close to zero.
-            let p = [0, 0, 0];
-            for (let name in this.state) {
-                p = Add(p, Multiply(this.mass[name] / this.mass.Earth, this.state[name].vel));
-            }
-            return p;
-        }
-
         Accelerations(state) {
             // Calculate the net acceleration vectors experienced by
             // each body due to the gravitational pull of all other bodies.
