@@ -65,6 +65,7 @@ body_t;
 
 typedef struct
 {
+    double   tt;            /* Terrestrial Time, relative to 1 January 2000 noon [days] */
     int      nbodies;
     body_t  *body;
 }
