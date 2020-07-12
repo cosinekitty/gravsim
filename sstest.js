@@ -27,18 +27,20 @@ const masses = {
 };
 
 
-function Test(label, ss, update) {
+function Test(ss, method) {
     const sim = gravsim.MakeSimulator(masses, ss.data[0].body);
-    const nsteps = 10000;
+    const nsteps = 1000;
     const dt = ss.dt / nsteps;
     const AU = 1.4959787069098932e+11;      // astronomical unit [m/au]
+
+    console.log(`BEGINNING: ${method}`);
 
     const p1 = sim.Momentum();
     console.log(`Initial momentum: ${p1}`);
 
     for (let n=0; n+1 < ss.data.length; ++n) {
         for (let i=0; i < nsteps; ++i) {
-            update(sim, dt);
+            sim[method](dt);
         }
     }
 
@@ -47,6 +49,7 @@ function Test(label, ss, update) {
     const err_au = gravsim.VectorError(se.pos, ce.pos);
     const err_km = err_au * (AU / 1000);
     const p2 = sim.Momentum();
+
     console.log(`Simulated Earth pos = ${se.pos}`);
     console.log(`Correct   Earth pos = ${ce.pos}`);
     console.log(`Error = ${err_au} AU (${err_km} km)`);
@@ -58,8 +61,8 @@ function Test(label, ss, update) {
 
 function main() {
     const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
-    Test('Naive',    ss, (sim, dt) => sim.Update1(dt));
-    Test('Improved', ss, (sim, dt) => sim.Update2(dt));
+    Test(ss, 'Update1');
+    Test(ss, 'Update2');
 }
 
 
