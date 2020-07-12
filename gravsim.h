@@ -72,5 +72,9 @@ typedef struct
 sim_t;
 
 vector_t Vector(double x, double y, double z);
+vector_t Subtract(vector_t a, vector_t b);
+
+void Accelerations(sim_t *sim, int sindex);
+void SimUpdate1(sim_t *sim, double dt);
 
 #endif /* __DDC_GRAVSIM_H */

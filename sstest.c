@@ -106,6 +106,8 @@ static int InitSolarSystem(sim_t *sim)
         -9.8824799249935378e+00, -2.7981499149074953e+01, -5.7546082780601502e+00,
         +3.0341297634731501e-03, -1.1343428301178919e-03, -1.2681607296589918e-03);
 
+    Accelerations(sim, 0);
+
     error = 0;
 fail:
     return error;
@@ -178,14 +180,28 @@ fail:
 }
 
 
+void Compare(sim_t *sim, sim_t *goal)
+{
+
+}
+
+
 int main()
 {
     int error  = 1;
     sim_t sim  = {0.0, 0, NULL};
     sim_t goal = {0.0, 0, NULL};
+    const int nsteps = 1000;
+    double dt;
+    int n;
 
     CHECK(InitSolarSystem(&sim));
     CHECK(InitFinalState(&goal));
+    dt = (goal.tt - sim.tt) / nsteps;
+    for (n=0; n < nsteps; ++n)
+        SimUpdate1(&sim, dt);
+
+    Compare(&sim, &goal);
 
 fail:
     if (sim.body != NULL) free(sim.body);
