@@ -1,0 +1,5 @@
+#!/bin/bash
+./build || exit $?
+echo "Running."
+./sstest || exit $?
+exit 0
