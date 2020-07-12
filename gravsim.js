@@ -68,12 +68,24 @@
             this.state = initialStates;
         }
 
+        Momentum() {
+            // Calculate the total linear momentum vector.
+            // Because momentum is conserved in Newtonian mechanics,
+            // and the origin (the Solar System Barycenter) is an inertial frame,
+            // the momentum should always be close to zero.
+            let p = [0, 0, 0];
+            for (let name in this.state) {
+                p = Add(p, Multiply(this.mass[name] / this.mass.Earth, this.state[name].vel));
+            }
+            return p;
+        }
+
         Accelerations(state) {
             // Calculate the net acceleration vectors experienced by
             // each body due to the gravitational pull of all other bodies.
             const acc = {};
             for (let [name, body] of Object.entries(state)) {
-                acc[name] = [0.0, 0.0, 0.0];
+                acc[name] = [0, 0, 0];
                 for (let [otherName, otherBody] of Object.entries(state)) {
                     if (body !== otherBody) {
                         let dr = Subtract(otherBody.pos, body.pos);
@@ -114,7 +126,7 @@
             return newState;
         }
 
-        NaiveUpdate(dt) {
+        Update1(dt) {
             // A naive update uses the accelerations of each body
             // at the start of the increment as if they are constant
             // over the time interval in that increment.
@@ -125,9 +137,9 @@
             return this.state;
         }
 
-        Update(dt) {
-            // This is a much more accurate update algorithm than NaiveUpdate.
-            // It starts the same way as NaiveUpdate, but refines the answer
+        Update2(dt) {
+            // This is a much more accurate update algorithm than Update1.
+            // It starts the same way as Update1, but refines the answer
             // by using the average of the acceleration vectors for the
             // beginning and ending of the increment.
             // This causes the estimated changes in velocity and position

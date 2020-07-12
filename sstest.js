@@ -27,24 +27,40 @@ const masses = {
 };
 
 
-function Test(label, update) {
-    const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
+function Test(label, ss, update) {
     const sim = gravsim.MakeSimulator(masses, ss.data[0].body);
     const nsteps = 10000;
     const dt = ss.dt / nsteps;
+    const AU = 1.4959787069098932e+11;      // astronomical unit [m/au]
 
-    console.log(`${label}: Simulating ${nsteps} steps of ${dt} days per step.`);
-    for (let i=0; i < nsteps; ++i) {
-        update(sim, dt);
+    const p1 = sim.Momentum();
+    console.log(`Initial momentum: ${p1}`);
+
+    for (let n=0; n+1 < ss.data.length; ++n) {
+        for (let i=0; i < nsteps; ++i) {
+            update(sim, dt);
+        }
     }
 
     const se = sim.state.Earth;
-    const ce = ss.data[1].body.Earth;
+    const ce = ss.data[ss.data.length-1].body.Earth;
+    const err_au = gravsim.VectorError(se.pos, ce.pos);
+    const err_km = err_au * (AU / 1000);
+    const p2 = sim.Momentum();
     console.log(`Simulated Earth pos = ${se.pos}`);
     console.log(`Correct   Earth pos = ${ce.pos}`);
-    console.log(`Error = ${gravsim.VectorError(se.pos, ce.pos)} AU`);
+    console.log(`Error = ${err_au} AU (${err_km} km)`);
+    console.log(`Final momentum: ${p2}`);
+    console.log(`Momentum error: ${gravsim.VectorError(p2, p1)}`);
     console.log();
 }
 
-Test('Naive',    (sim, dt) => sim.NaiveUpdate(dt))
-Test('Improved', (sim, dt) => sim.Update(dt))
+
+function main() {
+    const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
+    Test('Naive',    ss, (sim, dt) => sim.Update1(dt));
+    Test('Improved', ss, (sim, dt) => sim.Update2(dt));
+}
+
+
+main();
