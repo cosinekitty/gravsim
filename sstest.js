@@ -57,6 +57,7 @@ function main() {
     const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
     Test(ss, 'Update1');
     Test(ss, 'Update2');
+    Test(ss, 'Update3');
 }
 
 

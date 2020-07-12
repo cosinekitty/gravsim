@@ -57,6 +57,16 @@
         return [(a[0]+b[0])/2, (a[1]+b[1])/2, (a[2]+b[2])/2];
     }
 
+    function EvalPoly(poly, t) {
+        let tpower = 1;
+        let sum = 0;
+        for (let coeff of poly) {
+            sum += coeff * tpower;
+            tpower *= t;
+        }
+        return sum;
+    }
+
     gravsim.VectorError = function(a, b) {
         const x = Subtract(a, b);
         return Math.sqrt(Dot(x, x));
@@ -154,6 +164,65 @@
                 guess = refined;
             } while (diff > 1.0e-15);
             this.state = guess;
+            return this.state;
+        }
+
+        Update3(dt) {
+            // A refinement of the idea in Update2.
+            // Find a best-fit quadratic function for the accelerations
+            // at times 0, dt/2, and dt.
+            // Integrate that acceleration to find a cubic velocity function.
+            // Integrate the velocity to find a quartic position function.
+            // Calculate the resulting positions at times 0, dt/2, and dt;
+            // this yields three refined estimates for accelerations.
+            // Iterate until convergence!
+            let acc1 = this.Accelerations(this.state);
+            let state2 = this.Movement(this.state, acc1, dt/2);
+            let acc2 = this.Accelerations(state2);
+            let state3 = this.Movement(state2, acc2, dt/2);
+            let acc3 = this.Accelerations(state3);
+
+            const p = 2 / dt;
+            for (let n=0; n<3; ++n) {        // assume convergence after 3 iterations
+                for (let [name, body] of Object.entries(this.state)) {
+                    let pos2 = [];
+                    let pos3 = [];
+                    let vel3 = [];
+                    // Solve each component of acceleration, velocity, and position independently.
+                    for (let i=0; i<3; ++i) {
+                        // Find the best-fit parabola through the three consecutive acceleration component values.
+                        let A = (acc3[name][i] + acc1[name][i])/2 - acc2[name][i];
+                        let B = (acc3[name][i] - acc1[name][i])/2;
+                        let E = A*p*p;
+                        let F = (B - 2*A)*p;
+                        let G = acc1[name][i];
+
+                        // Now we have a parabola that approximates acceleration:
+                        // a(t) = Et^2 + Ft + G
+                        // Integrate to get velocity:
+                        // v(t) = (1/3)Et^3 + (1/2)Ft^2 + Gt + v(0)
+                        let vel_poly = [body.vel[i], G, F/2, E/3];
+                        vel3[i] = EvalPoly(vel_poly, dt);
+
+                        // Integrate again to get position:
+                        // r(t) = (1/12)Et^4 + (1/6)Ft^3 + (1/2)Gt^2 + v(0)t + r(0)
+                        let pos_poly = [body.pos[i], body.vel[i], G/2, F/6, E/12];
+                        pos2[i] = EvalPoly(pos_poly, dt/2);
+                        pos3[i] = EvalPoly(pos_poly, dt);
+                    }
+                    // Now we have updated position and velocity vectors for this body
+                    // at times dt/2 and dt. Replace them inside the estimated state objects.
+                    // Tricky: we don't bother to update state2 velocity, because it has no effect
+                    // on the final results. We *do* need state3 velocity because it will end up
+                    // being part of the complete system state when we are done converging.
+                    state2[name].pos = pos2;
+                    state3[name].pos = pos3;
+                    state3[name].vel = vel3;
+                }
+                acc2 = this.Accelerations(state2);
+                acc3 = this.Accelerations(state3);
+            }
+            this.state = state3;
             return this.state;
         }
     }
