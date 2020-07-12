@@ -180,7 +180,7 @@
             let acc3 = this.Accelerations(state3);
 
             const p = 2 / dt;
-            for (let n=0; n<3; ++n) {        // assume convergence after 3 iterations
+            for (let n=0; n<2; ++n) {        // assume enough loops for convergence
                 for (let [name, body] of Object.entries(this.state)) {
                     let pos2 = [];
                     let pos3 = [];

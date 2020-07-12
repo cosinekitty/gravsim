@@ -24,36 +24,42 @@ const gm = {
     Pluto:      0.2188699765425970e-11
 };
 
+const AU = 1.49597870691e+11;           // astronomical unit [m/au]
+
+
+function PrintErrors(sim, ref) {
+    for (let name in sim.state) {
+        const se = sim.state[name];
+        const ce = ref.body[name];
+        const err_au = gravsim.VectorError(se.pos, ce.pos);
+        const err_km = err_au * (AU / 1000);
+        console.log(`${name.padEnd(10)} error = ${err_au.toFixed(8).padStart(10)} AU (${err_km.toFixed(1).padStart(12)} km)`);
+    }
+}
+
 
 function Test(ss, method) {
     const sim = gravsim.MakeSimulator(gm, ss.data[0].body);
-    const nsteps = 1000;
+    const nsteps = 5000;
     const dt = ss.dt / nsteps;
-    const AU = 1.49597870691e+11;           // astronomical unit [m/au]
 
-    console.log();
-    console.log(method);
+    console.log(`${method}: nsteps=${nsteps}, dt=${dt} days.`);
 
     for (let n=0; n+1 < ss.data.length; ++n) {
         for (let i=0; i < nsteps; ++i) {
             sim[method](dt);
         }
+        //console.log();
+        //console.log(`${method}: n=${n}`);
     }
-
-    for (let name in sim.state) {
-        const se = sim.state[name];
-        const ce = ss.data[ss.data.length-1].body[name];
-        const err_au = gravsim.VectorError(se.pos, ce.pos);
-        const err_km = err_au * (AU / 1000);
-        console.log(`${name.padEnd(10)} error = ${err_au.toFixed(6).padStart(10)} AU (${err_km.toFixed(1).padStart(12)} km)`);
-    }
+    PrintErrors(sim, ss.data[ss.data.length-1]);
 }
 
 
 function main() {
     const ss = JSON.parse(fs.readFileSync('ephemeris.json'));
-    Test(ss, 'Update1');
-    Test(ss, 'Update2');
+    //Test(ss, 'Update1');
+    //Test(ss, 'Update2');
     Test(ss, 'Update3');
 }
 
