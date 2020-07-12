@@ -114,11 +114,42 @@ void Accelerations(sim_t *sim, int s)
 }
 
 
+void MoveBody(state_t *state, double dt)
+{
+    /*
+        Adjust body state's position and velocity,
+        using its current position, velocity, and acceleration.
+
+        pos' = pos + vel*dt + (1/2)acc*dt^2
+        vel' = vel + acc*dt
+    */
+    vector_t dv = Mul(dt, state->acc);
+    vector_t dr = Add(Mul(dt, state->vel), Mul(dt/2.0, dv));
+    state->vel = Add(state->vel, dv);
+    state->pos = Add(state->pos, dr);
+}
+
+
+void MoveBodyColumn(sim_t *sim, int s, double dt)
+{
+    int b;
+
+    for (b=0; b < sim->nbodies; ++b)
+        MoveBody(&sim->body[b].state[s], dt);
+
+    /* Update acceleration vectors to match new positions. */
+    Accelerations(sim, s);
+}
+
+
+
 void SimUpdate1(sim_t *sim, double dt)
 {
     /*
         This is a naive algorithm, just to get started.
-        Calculate the current accelerations, then apply them as if
-        they are constant across the interval dt.
+        Apply the current state[0] accelerations as if they are
+        constant over the interval dt.
     */
+    MoveBodyColumn(sim,  0, dt);
+    sim->tt += dt;
 }

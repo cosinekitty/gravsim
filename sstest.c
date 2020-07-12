@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "gravsim.h"
 
 static const size_t nbodies = 10;
@@ -106,6 +107,7 @@ static int InitSolarSystem(sim_t *sim)
         -9.8824799249935378e+00, -2.7981499149074953e+01, -5.7546082780601502e+00,
         +3.0341297634731501e-03, -1.1343428301178919e-03, -1.2681607296589918e-03);
 
+    /* Always keep acceleration up to date with position and velocity. */
     Accelerations(sim, 0);
 
     error = 0;
@@ -182,7 +184,18 @@ fail:
 
 void Compare(sim_t *sim, sim_t *goal)
 {
+    int i;
+    vector_t diff;
+    double dr;
 
+    /* Display the discrepancy between the calculated positions and the goal positions. */
+
+    for (i=0; i < sim->nbodies; ++i)
+    {
+        diff = Sub(sim->body[i].state[0].pos, goal->body[i].state[0].pos);
+        dr = sqrt(Dot(diff, diff));
+        printf("%-8s %12.8lf\n", sim->body[i].name, dr);
+    }
 }
 
 
@@ -191,7 +204,7 @@ int main()
     int error  = 1;
     sim_t sim  = {0.0, 0, NULL};
     sim_t goal = {0.0, 0, NULL};
-    const int nsteps = 1000;
+    const int nsteps = 36 * 5000;
     double dt;
     int n;
 

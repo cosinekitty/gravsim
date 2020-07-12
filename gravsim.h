@@ -72,7 +72,10 @@ typedef struct
 sim_t;
 
 vector_t Vector(double x, double y, double z);
-vector_t Subtract(vector_t a, vector_t b);
+vector_t Sub(vector_t a, vector_t b);
+vector_t Add(vector_t a, vector_t b);
+vector_t Mul(double k, vector_t v);
+double Dot(vector_t a, vector_t b);
 
 void Accelerations(sim_t *sim, int sindex);
 void SimUpdate1(sim_t *sim, double dt);
