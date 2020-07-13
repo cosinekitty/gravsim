@@ -197,27 +197,49 @@ void Compare(sim_t *sim, sim_t *goal)
     {
         diff = Sub(sim->body[i].state[sim->si].pos, goal->body[i].state[goal->si].pos);
         dr = sqrt(Dot(diff, diff));
-        printf("%-8s %12.8lf\n", sim->body[i].name, dr);
+        printf("%-8s  %12.8lf AU  %12.0lf km\n", sim->body[i].name, dr, dr * AU_KM);
     }
 }
 
 
-int main()
+int main(int argc, const char *argv[])
 {
+    typedef void (*update_func_t) (sim_t *sim, double dt);
+
     int error  = 1;
     sim_t sim, goal;
-    const int nsteps = 36 * 5000;
+    const int nsteps = 36 * 50000;
     double dt;
-    int n;
+    int n, fn;
+    update_func_t func;
 
     memset(&sim, 0, sizeof(sim));
     memset(&goal, 0, sizeof(goal));
 
+    if (argc != 2)
+        FAIL("USAGE: sstest [func]\n");
+
+    fn = atoi(argv[1]);
+    switch (fn)
+    {
+    case 1:
+        func = SimUpdate1;
+        break;
+
+    case 2:
+        func = SimUpdate2;
+        break;
+
+    default:
+        FAIL("Invalid function selector '%s'\n", argv[1]);
+    }
+
+    printf("\nFunction #%d\n", fn);
     CHECK(InitSolarSystem(&sim));
     CHECK(InitFinalState(&goal));
     dt = (goal.tt - sim.tt) / nsteps;
     for (n=0; n < nsteps; ++n)
-        SimUpdate1(&sim, dt);
+        func(&sim, dt);
 
     Compare(&sim, &goal);
 

@@ -28,6 +28,7 @@
 */
 
 #include <math.h>
+#include <stdio.h>
 #include "gravsim.h"
 
 
@@ -60,6 +61,16 @@ vector_t Add(vector_t a, vector_t b)
     c.c[0] = a.c[0] + b.c[0];
     c.c[1] = a.c[1] + b.c[1];
     c.c[2] = a.c[2] + b.c[2];
+    return c;
+}
+
+
+vector_t Average(vector_t a, vector_t b)
+{
+    vector_t c;
+    c.c[0] = (a.c[0] + b.c[0]) / 2.0;
+    c.c[1] = (a.c[1] + b.c[1]) / 2.0;
+    c.c[2] = (a.c[2] + b.c[2]) / 2.0;
     return c;
 }
 
@@ -142,6 +153,24 @@ void MoveBodyColumn(sim_t *sim, int s, double dt)
 }
 
 
+void CopyColumn(sim_t *sim, int dest, int source)
+{
+    int b;
+
+    for (b=0; b < sim->nbodies; ++b)
+        sim->body[b].state[dest] = sim->body[b].state[source];
+}
+
+
+double RelativeDiscrepancy(vector_t a, vector_t b)
+{
+    vector_t diff = Sub(a, b);
+    double numer2 = Dot(diff, diff);
+    double denom2 = Dot(a, a);
+    return sqrt(numer2 / denom2);
+}
+
+
 void SimUpdate1(sim_t *sim, double dt)
 {
     /*
@@ -150,5 +179,47 @@ void SimUpdate1(sim_t *sim, double dt)
         constant over the interval dt.
     */
     MoveBodyColumn(sim, sim->si, dt);
+    sim->tt += dt;
+}
+
+
+void SimUpdate2(sim_t *sim, double dt)
+{
+    int b;
+    int count;
+
+    /*
+        A more sophisticated algorithm:
+        Iteratively search for a median acceleration that causes
+        each body to end up at a point that causes that same median acceleration.
+        Start out by using the current acceleration to find our first guess
+        for the next position.
+    */
+
+    CopyColumn(sim, 1, 0);          /* copy column 0 to column 1 */
+    MoveBodyColumn(sim, 1, dt);     /* apply acceleration to column 1 */
+
+    for (count=0; count<3; ++count)
+    {
+        /*
+            Copy the original (pos,vel) from column 0 into column 2.
+            But make the acceleration in column 2 the average of columns 0 and 1.
+        */
+
+        for (b=0; b < sim->nbodies; ++b)
+        {
+            state_t *s = sim->body[b].state;
+            s[2].pos = s[0].pos;
+            s[2].vel = s[0].vel;
+            s[2].acc = Average(s[0].acc, s[1].acc);
+        }
+
+        /*
+            Apply the updated average acceleration to the original positions and velocities.
+        */
+        MoveBodyColumn(sim, 2, dt);
+    }
+
+    CopyColumn(sim, 0, 2);
     sim->tt += dt;
 }

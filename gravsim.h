@@ -32,6 +32,8 @@
 #define CHECK(x)    do{if(0 != (error = (x))) goto fail;}while(0)
 #define FAIL(...)   do{fprintf(stderr, __VA_ARGS__); error = 1; goto fail;}while(0)
 
+#define AU_KM   1.49597870691e+08
+
 /*
     To use C in a functional programming style,
     I define the vector type 'vector_t' as an array inside a struct.
@@ -80,5 +82,6 @@ double Dot(vector_t a, vector_t b);
 
 void Accelerations(sim_t *sim, int sindex);
 void SimUpdate1(sim_t *sim, double dt);
+void SimUpdate2(sim_t *sim, double dt);
 
 #endif /* __DDC_GRAVSIM_H */

@@ -1,5 +1,8 @@
 #!/bin/bash
 ./build || exit $?
-echo "Running."
-./sstest || exit $?
+
+for func in {1..2}; do
+    ./sstest ${func} || exit $?
+done
+
 exit 0
