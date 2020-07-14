@@ -34,6 +34,8 @@
 
 #define AU_KM   1.49597870691e+08
 
+#define MAX_BODIES   10
+
 /*
     To use C in a functional programming style,
     I define the vector type 'vector_t' as an array inside a struct.
@@ -51,7 +53,6 @@ typedef struct
 {
     vector_t    pos;    /* position vector [au] */
     vector_t    vel;    /* velocity vector [au/day] */
-    vector_t    acc;    /* acceleration vector [au/day^2] */
 }
 state_t;
 
@@ -60,17 +61,16 @@ typedef struct
 {
     const char *name;       /* The name of the body, e.g. "Sun" or "Mars". */
     double      gm;         /* The product G*M (gravity constant times mass) for this body */
-    state_t     state[3];   /* state[0] is current state, [1] and [2] are holders for 2 incremental states */
 }
 body_t;
 
 
 typedef struct
 {
-    double   tt;            /* Terrestrial Time, relative to 1 January 2000 noon [days] */
+    double   tt;                /* Terrestrial Time, relative to 1 January 2000 noon [days] */
     int      nbodies;
-    int      si;            /* current state index */
-    body_t  *body;
+    body_t   body[MAX_BODIES];
+    state_t  state[MAX_BODIES];
 }
 sim_t;
 
@@ -80,7 +80,6 @@ vector_t Add(vector_t a, vector_t b);
 vector_t Mul(double k, vector_t v);
 double Dot(vector_t a, vector_t b);
 
-void Accelerations(sim_t *sim, int sindex);
 void SimUpdate1(sim_t *sim, double dt);
 void SimUpdate2(sim_t *sim, double dt);
 
