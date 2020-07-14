@@ -194,6 +194,40 @@ void SimUpdate2(sim_t *sim, double dt)
     vector_t mean_acc[MAX_BODIES];
     state_t  next_state[MAX_BODIES];
 
+    /* Calculate accelerations of each body at the current time. */
+    Accelerations(sim->nbodies, sim->body, sim->state, curr_acc);
+
+    /* Move the bodies as if current accerlation applies over the whole interval [0, dt]. */
+    MoveAllBodies(sim->nbodies, sim->state, next_state, curr_acc, dt);
+
+    for (i=0; i < 2; ++i)
+    {
+        /* Calculate accelerations of the estimated next location of the bodies. */
+        Accelerations(sim->nbodies, sim->body, next_state, next_acc);
+
+        /* Take the average of the beginning and ending accelerations */
+        /* as estimates for mean acceleration. */
+        for (b=0; b < sim->nbodies; ++b)
+            mean_acc[b] = Average(curr_acc[b], next_acc[b]);
+
+        /* Refine the estimate of where the bodies will be after dt. */
+        MoveAllBodies(sim->nbodies, sim->state, next_state, mean_acc, dt);
+    }
+
+    /* Update the current state of each body to be the final refined estimate. */
+    CopyStates(sim->nbodies, next_state, sim->state);
+    sim->tt += dt;
+}
+
+
+void SimUpdate3(sim_t *sim, double dt)
+{
+    int b, i;
+    vector_t curr_acc[MAX_BODIES];
+    vector_t next_acc[MAX_BODIES];
+    vector_t mean_acc[MAX_BODIES];
+    state_t  next_state[MAX_BODIES];
+
     Accelerations(sim->nbodies, sim->body, sim->state, curr_acc);
     MoveAllBodies(sim->nbodies, sim->state, next_state, curr_acc, dt);
 
@@ -204,6 +238,8 @@ void SimUpdate2(sim_t *sim, double dt)
         for (b=0; b < sim->nbodies; ++b)
             mean_acc[b] = Average(curr_acc[b], next_acc[b]);
 
+        MoveAllBodies(sim->nbodies, sim->state, next_state, mean_acc, dt/2);
+        Accelerations(sim->nbodies, sim->body, next_state, mean_acc);
         MoveAllBodies(sim->nbodies, sim->state, next_state, mean_acc, dt);
     }
 

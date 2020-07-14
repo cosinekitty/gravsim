@@ -82,5 +82,6 @@ double Dot(vector_t a, vector_t b);
 
 void SimUpdate1(sim_t *sim, double dt);
 void SimUpdate2(sim_t *sim, double dt);
+void SimUpdate3(sim_t *sim, double dt);
 
 #endif /* __DDC_GRAVSIM_H */

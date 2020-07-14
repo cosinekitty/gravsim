@@ -236,6 +236,10 @@ int main(int argc, const char *argv[])
         func = SimUpdate2;
         break;
 
+    case 3:
+        func = SimUpdate3;
+        break;
+
     default:
         FAIL("Invalid function selector '%s'\n", argv[1]);
     }
