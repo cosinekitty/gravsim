@@ -2,7 +2,7 @@
 ./build || exit $?
 
 for func in {1..2}; do
-    ./sstest ${func} || exit $?
+    ./sstest ${func} 50 || exit $?
 done
 
 exit 0

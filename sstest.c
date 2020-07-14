@@ -213,13 +213,17 @@ int main(int argc, const char *argv[])
 
     int error  = 1;
     sim_t sim, goal;
-    const int nsteps = 36 * 10000;
     double dt;
-    int n, fn;
+    int n, fn, samples_per_day, nsteps;
     update_func_t func;
 
-    if (argc != 2)
-        FAIL("USAGE: sstest [func]\n");
+    if (argc != 3)
+        FAIL("USAGE: sstest func samples_per_day\n");
+
+    samples_per_day = atoi(argv[2]);
+    if (samples_per_day < 1)
+        FAIL("Invalid number of samples per day: '%s'\n", argv[2]);
+    nsteps = 36000 * samples_per_day;
 
     fn = atoi(argv[1]);
     switch (fn)
@@ -236,10 +240,10 @@ int main(int argc, const char *argv[])
         FAIL("Invalid function selector '%s'\n", argv[1]);
     }
 
-    printf("\nFunction #%d\n", fn);
     CHECK(InitSolarSystem(&sim));
     CHECK(InitFinalState(&goal))    ;
     dt = (goal.tt - sim.tt) / nsteps;
+    printf("\nFunction #%d  dt=%0.6lf days\n", fn, dt);
     for (n=0; n < nsteps; ++n)
         func(&sim, dt);
 

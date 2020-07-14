@@ -197,7 +197,7 @@ void SimUpdate2(sim_t *sim, double dt)
     Accelerations(sim->nbodies, sim->body, sim->state, curr_acc);
     MoveAllBodies(sim->nbodies, sim->state, next_state, curr_acc, dt);
 
-    for (i=0; i < 3; ++i)
+    for (i=0; i < 2; ++i)
     {
         Accelerations(sim->nbodies, sim->body, next_state, next_acc);
 
