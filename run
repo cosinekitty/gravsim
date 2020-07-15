@@ -1,8 +1,8 @@
 #!/bin/bash
 ./build || exit $?
 
-for func in {1..2}; do
-    ./sstest ${func} 50 || exit $?
+for func in {1..3}; do
+    ./sstest ${func} 100 || exit $?
 done
 
 exit 0

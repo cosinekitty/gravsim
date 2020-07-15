@@ -250,8 +250,7 @@ void SimUpdate2(sim_t *sim, double dt)
 void SimUpdate3(sim_t *sim, double dt)
 {
     int b, k;
-    double J, K, L, A, B, C, E, F, G, p;
-    double tmid, tmid2, tmid3, tmid4;
+    double J, K, L, A, B, E, F, G, p;
     double dt2, dt3, dt4;
     state_t next_state[MAX_BODIES];
     state_t middle_state[MAX_BODIES];
@@ -270,10 +269,6 @@ void SimUpdate3(sim_t *sim, double dt)
     Accelerations(sim->nbodies, sim->body, middle_state, middle_acc);
 
     p = 2.0 / dt;
-    tmid = (dt / 2.0);
-    tmid2 = tmid * tmid;
-    tmid3 = tmid * tmid2;
-    tmid4 = tmid2 * tmid2;
     dt2 = dt * dt;
     dt3 = dt * dt2;
     dt4 = dt2 * dt2;
@@ -288,20 +283,19 @@ void SimUpdate3(sim_t *sim, double dt)
             L = next_acc[b].c[k];
 
             /* Find coefficients of the best fit parabola */
-            A = (L + J) / 2.0 - K;
-            B = (L - J) / 2.0;
-            C = K;
+            A = (L + J)/2 - K;
+            B = (L - J)/2;
 
             E = A*p*p;
-            F = (B - 2 * A)*p;
+            F = (B - 2*A)*p;
             G = J;
 
             /* acceleration = Et^2 + Ft + G */
             /* Integrating, we get: velocity = (1/3)Et^3 + (1/2)Ft^2 + Gt + V0 */
-            next_state[b].vel.c[k] = (E / 3)*dt3 + (F / 2)*dt2 + G*dt + sim->state[b].vel.c[k];
+            next_state[b].vel.c[k] = (E/3)*dt3 + (F/2)*dt2 + G*dt + sim->state[b].vel.c[k];
 
             /* Integrating again, we get: position = (1/12)Et^4 + (1/6)Ft^3 + (1/2)Gt^2 + V0*t + r0 */
-            next_state[b].pos.c[k] = (E / 12)*dt4 + (F / 6)*dt3 + (G / 2)*dt2 + sim->state[b].vel.c[k] * dt + sim->state[b].pos.c[k];
+            next_state[b].pos.c[k] = (E/12)*dt4 + (F/6)*dt3 + (G/2)*dt2 + sim->state[b].vel.c[k]*dt + sim->state[b].pos.c[k];
         }
     }
 
