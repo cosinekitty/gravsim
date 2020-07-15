@@ -171,48 +171,75 @@ double RelativeDiscrepancy(vector_t a, vector_t b)
 }
 
 
+double PosError(int nbodies, state_t state1[], state_t state2[])
+{
+    int b;
+    double sum;
+
+    sum = 0.0;
+    for (b = 0; b < nbodies; ++b)
+        sum += RelativeDiscrepancy(state1[b].pos, state2[b].pos);
+
+    return sum;
+}
+
+
 void SimUpdate1(sim_t *sim, double dt)
 {
     vector_t acc[MAX_BODIES];
 
-    /*
-        This is a naive algorithm, just to get started.
-        Apply the current state[0] accelerations as if they are
-        constant over the interval dt.
-    */
+    /* Calculate the accelerations acting on the bodies at the current time. */
     Accelerations(sim->nbodies, sim->body, sim->state, acc);
+
+    /* Naively assume that accerlation applies over the entire time increment. */
     MoveAllBodies(sim->nbodies, sim->state, sim->state, acc, dt);
     sim->tt += dt;
 }
 
 
-void SimUpdate2(sim_t *sim, double dt)
+void ApproximateMovement(
+    int nbodies,
+    double dt,
+    const body_t body[],
+    const state_t curr_state[],
+    state_t next_state[],
+    vector_t curr_acc[],
+    vector_t mean_acc[],
+    vector_t next_acc[])
 {
-    int b, i;
-    vector_t curr_acc[MAX_BODIES];
-    vector_t next_acc[MAX_BODIES];
-    vector_t mean_acc[MAX_BODIES];
-    state_t  next_state[MAX_BODIES];
+    int i, b;
 
     /* Calculate accelerations of each body at the current time. */
-    Accelerations(sim->nbodies, sim->body, sim->state, curr_acc);
+    Accelerations(nbodies, body, curr_state, curr_acc);
 
     /* Move the bodies as if current accerlation applies over the whole interval [0, dt]. */
-    MoveAllBodies(sim->nbodies, sim->state, next_state, curr_acc, dt);
+    MoveAllBodies(nbodies, curr_state, next_state, curr_acc, dt);
 
-    for (i=0; i < 2; ++i)
+    for (i = 0; i < 2; ++i)
     {
         /* Calculate accelerations of the estimated next location of the bodies. */
-        Accelerations(sim->nbodies, sim->body, next_state, next_acc);
+        Accelerations(nbodies, body, next_state, next_acc);
 
         /* Take the average of the beginning and ending accelerations */
         /* as estimates for mean acceleration. */
-        for (b=0; b < sim->nbodies; ++b)
+        for (b = 0; b < nbodies; ++b)
             mean_acc[b] = Average(curr_acc[b], next_acc[b]);
 
         /* Refine the estimate of where the bodies will be after dt. */
-        MoveAllBodies(sim->nbodies, sim->state, next_state, mean_acc, dt);
+        MoveAllBodies(nbodies, curr_state, next_state, mean_acc, dt);
     }
+}
+
+
+void SimUpdate2(sim_t *sim, double dt)
+{
+    state_t next_state[MAX_BODIES];
+    vector_t curr_acc[MAX_BODIES];
+    vector_t mean_acc[MAX_BODIES];
+    vector_t next_acc[MAX_BODIES];
+
+    /* Find a time-reversible mean acceleration over the interval dt. */
+    ApproximateMovement(sim->nbodies, dt, sim->body, sim->state, next_state, curr_acc, mean_acc, next_acc);
 
     /* Update the current state of each body to be the final refined estimate. */
     CopyStates(sim->nbodies, next_state, sim->state);
@@ -222,25 +249,60 @@ void SimUpdate2(sim_t *sim, double dt)
 
 void SimUpdate3(sim_t *sim, double dt)
 {
-    int b, i;
+    int b, k;
+    double J, K, L, A, B, C, E, F, G, p;
+    double tmid, tmid2, tmid3, tmid4;
+    double dt2, dt3, dt4;
+    state_t next_state[MAX_BODIES];
+    state_t middle_state[MAX_BODIES];
     vector_t curr_acc[MAX_BODIES];
-    vector_t next_acc[MAX_BODIES];
     vector_t mean_acc[MAX_BODIES];
-    state_t  next_state[MAX_BODIES];
+    vector_t middle_acc[MAX_BODIES];
+    vector_t next_acc[MAX_BODIES];
 
-    Accelerations(sim->nbodies, sim->body, sim->state, curr_acc);
-    MoveAllBodies(sim->nbodies, sim->state, next_state, curr_acc, dt);
+    /* Find a time-reversible mean acceleration over the interval dt. */
+    ApproximateMovement(sim->nbodies, dt, sim->body, sim->state, next_state, curr_acc, mean_acc, next_acc);
 
-    for (i=0; i < 2; ++i)
+    /* Apply the mean acceleration for half the time (dt/2) to find middle state (position and velocity). */
+    MoveAllBodies(sim->nbodies, sim->state, middle_state, mean_acc, dt / 2.0);
+
+    /* Refine the acceleration at the middle time. */
+    Accelerations(sim->nbodies, sim->body, middle_state, middle_acc);
+
+    p = 2.0 / dt;
+    tmid = (dt / 2.0);
+    tmid2 = tmid * tmid;
+    tmid3 = tmid * tmid2;
+    tmid4 = tmid2 * tmid2;
+    dt2 = dt * dt;
+    dt3 = dt * dt2;
+    dt4 = dt2 * dt2;
+
+    /* Find the unique best-fit parabolas for the 3 acceleration components (x, y, z). */
+    for (b = 0; b < sim->nbodies; ++b)
     {
-        Accelerations(sim->nbodies, sim->body, next_state, next_acc);
+        for (k = 0; k < 3; ++k)     /* iterate through the components of the vectors: 0=x, 1=y, 2=z */
+        {
+            J = curr_acc[b].c[k];
+            K = middle_acc[b].c[k];
+            L = next_acc[b].c[k];
 
-        for (b=0; b < sim->nbodies; ++b)
-            mean_acc[b] = Average(curr_acc[b], next_acc[b]);
+            /* Find coefficients of the best fit parabola */
+            A = (L + J) / 2.0 - K;
+            B = (L - J) / 2.0;
+            C = K;
 
-        MoveAllBodies(sim->nbodies, sim->state, next_state, mean_acc, dt/2);
-        Accelerations(sim->nbodies, sim->body, next_state, mean_acc);
-        MoveAllBodies(sim->nbodies, sim->state, next_state, mean_acc, dt);
+            E = A*p*p;
+            F = (B - 2 * A)*p;
+            G = J;
+
+            /* acceleration = Et^2 + Ft + G */
+            /* Integrating, we get: velocity = (1/3)Et^3 + (1/2)Ft^2 + Gt + V0 */
+            next_state[b].vel.c[k] = (E / 3)*dt3 + (F / 2)*dt2 + G*dt + sim->state[b].vel.c[k];
+
+            /* Integrating again, we get: position = (1/12)Et^4 + (1/6)Ft^3 + (1/2)Gt^2 + V0*t + r0 */
+            next_state[b].pos.c[k] = (E / 12)*dt4 + (F / 6)*dt3 + (G / 2)*dt2 + sim->state[b].vel.c[k] * dt + sim->state[b].pos.c[k];
+        }
     }
 
     CopyStates(sim->nbodies, next_state, sim->state);

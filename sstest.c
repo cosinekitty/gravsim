@@ -192,18 +192,21 @@ void Compare(sim_t *sim, sim_t *goal)
 {
     int i;
     vector_t diff;
-    double dr;
+    double dr, rel, score;
 
     printf("sim time = %0.8lf, goal time = %0.8lf\n", sim->tt, goal->tt);
 
     /* Display the discrepancy between the calculated positions and the goal positions. */
 
+    score = 0.0;
     for (i=0; i < MAX_BODIES; ++i)
     {
         diff = Sub(sim->state[i].pos, goal->state[i].pos);
         dr = sqrt(Dot(diff, diff));
-        printf("%-8s  %12.8lf AU  %12.0lf km\n", sim->body[i].name, dr, dr * AU_KM);
+        score += rel = RelativeDiscrepancy(sim->state[i].pos, goal->state[i].pos);
+        printf("%-8s  %12.8lf AU  %12.0lf km  (%le relative)\n", sim->body[i].name, dr, dr * AU_KM, rel);
     }
+    printf("SCORE = %le\n", score);
 }
 
 

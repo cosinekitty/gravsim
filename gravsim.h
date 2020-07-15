@@ -32,7 +32,11 @@
 #define CHECK(x)    do{if(0 != (error = (x))) goto fail;}while(0)
 #define FAIL(...)   do{fprintf(stderr, __VA_ARGS__); error = 1; goto fail;}while(0)
 
-#define AU_KM   1.49597870691e+08
+#define SECONDS_PER_DAY           (24.0 * 3600.0)
+#define AU_KM                     1.49597870691e+08
+#define AU_M                      (AU_KM * 1000.0)
+#define LIGHT_METERS_PER_SECOND   299792458.0
+#define LIGHT_AU_PER_DAY          (LIGHT_METERS_PER_SECOND * (SECONDS_PER_DAY / AU_M))
 
 #define MAX_BODIES   10
 
@@ -79,6 +83,8 @@ vector_t Sub(vector_t a, vector_t b);
 vector_t Add(vector_t a, vector_t b);
 vector_t Mul(double k, vector_t v);
 double Dot(vector_t a, vector_t b);
+
+double RelativeDiscrepancy(vector_t a, vector_t b);
 
 void SimUpdate1(sim_t *sim, double dt);
 void SimUpdate2(sim_t *sim, double dt);
