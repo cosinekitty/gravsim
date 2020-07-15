@@ -250,8 +250,8 @@ void SimUpdate2(sim_t *sim, double dt)
 void SimUpdate3(sim_t *sim, double dt)
 {
     int b, k;
-    double J, K, L, A, B, E, F, G, p;
-    double dt2, dt3, dt4;
+    double J, K, L, A, B, E, F, p;
+    double dt2, dt3, dt4, v0, r0;
     state_t next_state[MAX_BODIES];
     state_t middle_state[MAX_BODIES];
     vector_t curr_acc[MAX_BODIES];
@@ -284,14 +284,16 @@ void SimUpdate3(sim_t *sim, double dt)
 
             E = A*p*p;
             F = (B - 2*A)*p;
-            G = J;
 
-            /* acceleration = Et^2 + Ft + G */
-            /* Integrating, we get: velocity = (1/3)Et^3 + (1/2)Ft^2 + Gt + V0 */
-            next_state[b].vel.c[k] = (E/3)*dt3 + (F/2)*dt2 + G*dt + sim->state[b].vel.c[k];
+            v0 = sim->state[b].vel.c[k];
+            r0 = sim->state[b].pos.c[k];
 
-            /* Integrating again, we get: position = (1/12)Et^4 + (1/6)Ft^3 + (1/2)Gt^2 + V0*t + r0 */
-            next_state[b].pos.c[k] = (E/12)*dt4 + (F/6)*dt3 + (G/2)*dt2 + sim->state[b].vel.c[k]*dt + sim->state[b].pos.c[k];
+            /* Acceleration = Et^2 + Ft + J. */
+            /* Integrating, we get the velocity curve. */
+            next_state[b].vel.c[k] = (E/3)*dt3 + (F/2)*dt2 + J*dt + v0;
+
+            /* Integrating again, we get the position curve. */
+            next_state[b].pos.c[k] = (E/12)*dt4 + (F/6)*dt3 + (J/2)*dt2 + v0*dt + r0;
         }
     }
 
