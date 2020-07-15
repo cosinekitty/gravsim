@@ -255,18 +255,14 @@ void SimUpdate3(sim_t *sim, double dt)
     state_t next_state[MAX_BODIES];
     state_t middle_state[MAX_BODIES];
     vector_t curr_acc[MAX_BODIES];
-    vector_t mean_acc[MAX_BODIES];
     vector_t middle_acc[MAX_BODIES];
     vector_t next_acc[MAX_BODIES];
 
     /* Find a time-reversible mean acceleration over the interval dt. */
-    ApproximateMovement(sim->nbodies, dt, sim->body, sim->state, next_state, curr_acc, mean_acc, next_acc);
+    ApproximateMovement(sim->nbodies, dt, sim->body, sim->state, next_state, curr_acc, middle_acc, next_acc);
 
     /* Apply the mean acceleration for half the time (dt/2) to find middle state (position and velocity). */
-    MoveAllBodies(sim->nbodies, sim->state, middle_state, mean_acc, dt / 2.0);
-
-    /* Refine the acceleration at the middle time. */
-    Accelerations(sim->nbodies, sim->body, middle_state, middle_acc);
+    MoveAllBodies(sim->nbodies, sim->state, middle_state, middle_acc, dt / 2.0);
 
     p = 2.0 / dt;
     dt2 = dt * dt;
