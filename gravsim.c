@@ -302,27 +302,26 @@ void SimUpdate3(sim_t *sim, double dt)
 }
 
 
-void SimUpdate4(sim_t *sim, double dt)
+void RefineLinearAcceleration(
+    int nbodies,
+    double dt,
+    const state_t curr_state[],
+    const vector_t curr_acc[],
+    state_t next_state[],
+    vector_t next_acc[])
 {
     int b, k;
     double v0, r0, a0, a1;
-    state_t next_state[MAX_BODIES];
-    vector_t curr_acc[MAX_BODIES];
-    vector_t middle_acc[MAX_BODIES];
-    vector_t next_acc[MAX_BODIES];
-
-    /* Find a time-reversible mean acceleration over the interval dt. */
-    ApproximateMovement(sim->nbodies, dt, sim->body, sim->state, next_state, curr_acc, middle_acc, next_acc);
 
     /* Approximate acceleration a(t) as a linear function over the interval [0, dt]. */
-    for (b = 0; b < sim->nbodies; ++b)
+    for (b = 0; b < nbodies; ++b)
     {
         for (k = 0; k < 3; ++k)     /* iterate through the components of the vectors: 0=x, 1=y, 2=z */
         {
             a0 = curr_acc[b].c[k];
             a1 = next_acc[b].c[k];
-            v0 = sim->state[b].vel.c[k];
-            r0 = sim->state[b].pos.c[k];
+            v0 = curr_state[b].vel.c[k];
+            r0 = curr_state[b].pos.c[k];
 
             /* Assume acceleration = [(a1-a0)/dt]*t + a0. */
             /* Integrate to get velocity = [(a1-a0)/(2*dt)]*t^2 + a0*t + v0. */
@@ -332,7 +331,19 @@ void SimUpdate4(sim_t *sim, double dt)
             next_state[b].pos.c[k] = (((a1 + 2*a0)/6)*dt + v0)*dt + r0;
         }
     }
+}
 
+
+void SimUpdate4(sim_t *sim, double dt)
+{
+    state_t next_state[MAX_BODIES];
+    vector_t curr_acc[MAX_BODIES];
+    vector_t middle_acc[MAX_BODIES];
+    vector_t next_acc[MAX_BODIES];
+
+    /* Find a time-reversible mean acceleration over the interval dt. */
+    ApproximateMovement(sim->nbodies, dt, sim->body, sim->state, next_state, curr_acc, middle_acc, next_acc);
+    RefineLinearAcceleration(sim->nbodies, dt, sim->state, curr_acc, next_state, next_acc);
     CopyStates(sim->nbodies, next_state, sim->state);
     sim->tt += dt;
 }
